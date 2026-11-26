@@ -1,0 +1,152 @@
+<!DOCTYPE html><html lang="ko"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>딩동 | 박승진</title><meta name="description" content="딩동은 소속사가 팬 이벤트를 열면, 팬이 통화권으로 정해진 시간 동안 아티스트와 1:1 영상통화를 하는 서비스입니다."><meta name="theme-color" content="#f3f6fb" media="(prefers-color-scheme: light)"><meta name="theme-color" content="#0a0e1a" media="(prefers-color-scheme: dark)"><link rel="canonical" href="https://mousepotato03.github.io/projects/dingdong/"><meta property="og:type" content="website"><meta property="og:locale" content="ko_KR"><meta property="og:title" content="딩동 | 박승진"><meta property="og:description" content="딩동은 소속사가 팬 이벤트를 열면, 팬이 통화권으로 정해진 시간 동안 아티스트와 1:1 영상통화를 하는 서비스입니다."><meta property="og:url" content="https://mousepotato03.github.io/projects/dingdong/"><meta property="og:image" content="https://mousepotato03.github.io/images/dingdong-welcome.webp"><link rel="icon" href="/favicon.svg" type="image/svg+xml"><script>
+      try {
+        const saved = localStorage.getItem("theme");
+        if (saved === "light" || saved === "dark")
+          document.documentElement.dataset.theme = saved;
+      } catch (e) {}
+    </script><link rel="stylesheet" href="/_astro/Base.Bn7zN9Kk.css"></head><body><a class="skip" href="#main">본문으로 건너뛰기</a><header class="site-header content" id="top"><a class="handle" href="/">@mousepotato03<span class="sr"> 홈</span></a><button class="theme-toggle" type="button" hidden><svg class="moon" viewBox="0 0 24 24" aria-hidden="true"><path d="M20.4 14.6A8.5 8.5 0 0 1 9.4 3.6a8.5 8.5 0 1 0 11 11Z"></path></svg><svg class="sun" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="4.2"></circle><path d="M12 2.5v2M12 19.5v2M2.5 12h2M19.5 12h2M5.3 5.3l1.4 1.4M17.3 17.3l1.4 1.4M5.3 18.7l1.4-1.4M17.3 6.7l1.4-1.4"></path></svg></button></header><main id="main" tabindex="-1"><article class="page content"><a href="/" class="back-link">홈으로</a><header class="page-head"><h1>딩동</h1><p>한 곳을 고치면 다른 곳이 깨지던 대기방·통화 상태 로직을 정리하고, WebRTC 영상통화가 멈추지 않고 연결되어 통화 시간이 정해진 만큼 정확히 흐르게 했습니다. 앱이 꺼져 있어도 실제 전화처럼 받을 수 있는 Android 통화 수신을 만들었고, 통화를 시스템 관점에서 지켜보는 시그널링 모니터와 통화 품질 로그를 구축했습니다.</p></header><nav class="toc" aria-label="이 페이지 목차"><p>목차</p><ol><li><a href="#통화가-멈추지-않고-연결되게-하기">통화가 멈추지 않고 연결되게 하기</a></li><li><a href="#정해진-시간만큼-정확히-흐르게-하기">정해진 시간만큼 정확히 흐르게 하기</a></li><li><a href="#앱이-꺼져-있어도-전화-받기">앱이 꺼져 있어도 전화 받기</a></li></ol></nav><div class="prose"><section><dl class="overview-dl"><div><dt>기간</dt><dd>2025.09 — 2025.11, 2026.07 — 2026.10</dd></div><div><dt>역할</dt><dd>대기방·통화 상태 로직 리팩토링, WebRTC 통화 연결·통화 시간 로직, Android 통화 수신 구현, 시그널링 모니터와 통화 품질 로그 구축</dd></div><div><dt>기술</dt><dd>Android, PHP, WebRTC, Socket.IO, coturn, FCM, MySQL</dd></div></dl></section><figure class="visual dingdong"><div class="stage phones-stage"><span class="plate-label"><span class="device-symbol phone-symbol"></span>Android 앱</span><div class="phone-pair"><div class="phone"><img src="/images/dingdong-welcome.webp" width="540" height="1171" loading="eager" alt="딩동 Google Play에 등록된 앱 시작 화면"></div><div class="phone"><img src="/images/dingdong-incoming.webp" width="540" height="1171" loading="eager" alt="딩동의 수신 대기 화면과 통화 수락 버튼"></div></div></div></figure><p class="source-caption"><a href="https://play.google.com/store/apps/details?id=com.dingdong.v1&hl=ko">Google Play 등록 이미지</a></p><h2 id="통화가-멈추지-않고-연결되게-하기">통화가 멈추지 않고 연결되게 하기</h2>
+<p>소속사가 딩동에서 이벤트를 열면, 팬은 통화권을 사고 이벤트 당일 앱의 대기방에서 순서를 기다립니다. 아티스트가 순서대로 팬에게 전화를 걸고, 팬이 받으면 정해진 시간 동안 1:1 영상통화를 합니다. 팬과 아티스트 모두 앱으로 참여하며, 앱은 웹뷰로 PHP 웹을 띄우는 구조입니다.</p>
+<p>영상은 WebRTC로 두 단말이 직접 주고받습니다. 연결하려면 서로의 접속 정보(offer, answer, ICE 후보)를 교환해야 하는데, 이 교환은 Node.js로 만든 Socket.IO 시그널링 서버가 중계합니다. 직접 연결되지 못하면 TURN 서버(coturn)가 영상을 대신 중계합니다.</p>
+<figure class="store-evidence"><div><img src="/images/dingdong-waiting.webp" width="540" height="1171" loading="lazy" alt="팬이 통화 전 카메라를 확인하는 딩동 대기방"/><img src="/images/dingdong-call.webp" width="540" height="1171" loading="lazy" alt="영상통화 화면에 표시된 잔여 시간"/></div><figcaption><a href="https://play.google.com/store/apps/details?id=com.dingdong.v1&amp;hl=ko">Google Play</a>에 등록된 대기방과 통화 화면입니다. 통화 화면에서 남은 시간을 확인할 수 있습니다.</figcaption></figure>
+<h3 id="고칠수록-다른-곳이-깨지던-대기방-상태">고칠수록 다른 곳이 깨지던 대기방 상태</h3>
+<p>처음 맡은 일은 2025년 MVP의 QA였습니다. 이 MVP는 앞서 다른 개발자들이 AI 코딩 도구로 빠르게 만든 코드였습니다. 팬 입장에서 이벤트에 참여해 보니 대기방에 들어간 뒤 다음 단계로 넘어가지 않는 등 상태가 꼬이는 문제가 계속 나왔고, 한 곳을 고치면 다른 곳에서 문제가 다시 생겼습니다. 같은 상태값을 여러 화면과 API가 각자 바꾸고 있었기 때문입니다.</p>
+<p>이런 상태값 중 가장 중요한 것은 팬이 지금 전화를 받을 수 있는지를 나타내는 대기방 상태였습니다. 아티스트는 통화 목록에서 ‘대기’ 상태인 팬에게만 전화를 걸 수 있어서, 이 값이 잘못 바뀌면 대기방에서 기다리는 팬이 순서가 와도 전화를 받지 못하거나 자리를 비운 팬에게 전화가 걸릴 수 있었습니다.</p>
+<p><mark>증상이 보인 곳만 고쳐서는 끝나지 않았으므로, 상태를 바꾸는 코드를 직접 읽어 가며 정리했습니다.</mark> 불필요한 쿼리와 상태를 잘못 바꾸던 로직을 지웠고, 대기방에서 다음 단계로 넘어가지 않던 문제는 상태 UPDATE 쿼리의 조건과 코드가 허용하는 상태값 목록을 고쳐 해결했습니다.</p>
+<p>2026년에 다시 합류해서는 대기방뿐 아니라 통화 로직 전체로 범위를 넓혔습니다. 통화가 끝나거나 끊길 때 상태를 바꾸는 코드가 API 여덟 곳에 흩어져 있었고, 통화 행을 고치는 UPDATE 문만 서른 개였습니다. 같은 통화 종료도 경로마다 다른 코드가 상태를 써서, 한 경로를 고쳐도 나머지 경로는 그대로였습니다.</p>
+<p><mark>그래서 통화 상태를 판정하고 DB에 쓰는 일을 함수 하나로 모았습니다.</mark> 팬 종료, 아티스트 종료, 거절, 30초 무응답, 하트비트 끊김, 앱의 백그라운드 전환과 복귀, 다른 기기 로그인처럼 상태가 바뀌는 상황을 열두 가지로 정의했고, 각 API는 현재 값을 조회해 상황 이름과 함께 이 함수에 넘기기만 합니다. 함수는 통화 행의 상태와 통화 기록을 쓰고, 그 팬이 통화하는 동안 다른 아티스트가 전화를 걸지 못하게 막아 두었던 상태도 되돌립니다. 팬의 위치 상태는 통화가 끝나 팬이 종료 화면으로 가는 경우에만 바꾸고, 거절이나 무응답, 끊김에서는 서버가 팬이 어느 화면에 있는지 알 수 없으므로 건드리지 않았습니다. 트랜잭션은 각 API에 남겨 두었는데, 푸시는 커밋한 뒤에 보낸다는 규칙이 있어서 커밋 시점은 푸시를 보내는 쪽이 정해야 했습니다.</p>
+<p>유료 이벤트를 앞두고, 소속사 관계자가 아티스트 대신 팬과 테스트콜을 하는 시연이 있었습니다. <mark>이 시연에서는 문제가 거의 나오지 않았고, 남은 문제도 대기방이나 통화 상태 때문이 아니었습니다.</mark> 이 문제들은 이어서 하나씩 해결했고, <a href="#%EC%97%B0%EA%B2%B0-%EC%A4%91%EC%97%90%EC%84%9C-%EB%A9%88%EC%B6%94%EB%8D%98-%ED%86%B5%ED%99%94">’연결 중’에서 멈추던 통화</a>, <a href="#5%EB%B6%84-%ED%86%B5%ED%99%94%EA%B0%80-299%EC%B4%88%EB%A1%9C-%EA%B8%B0%EB%A1%9D%EB%90%98%EB%8D%98-%EC%9D%B4%EC%9C%A0">5분 통화가 299초로 기록되던 이유</a>, <a href="#%EC%95%B1%EC%9D%B4-%EA%BA%BC%EC%A0%B8-%EC%9E%88%EC%96%B4%EB%8F%84-%EC%A0%84%ED%99%94-%EB%B0%9B%EA%B8%B0">앱이 꺼져 있어도 전화 받기</a>에서 차례로 다룹니다.</p>
+<h3 id="연결-중에서-멈추던-통화">’연결 중’에서 멈추던 통화</h3>
+<p>시그널링 서버는 통화 한 건마다 통화방을 하나 열고, 아티스트와 팬의 단말은 같은 통화방에 들어와 있어야 서로의 접속 정보를 주고받을 수 있습니다. 아티스트가 통화 목록에서 팬을 고르면 발신 화면이 열리고, 아티스트는 이 화면에서 통화방에 먼저 들어간 뒤 팬에게 전화를 겁니다. 팬이 수신 화면에서 수락하면 수락 신호가 아티스트에게 가고, 두 사람은 각자 통화 화면으로 넘어갑니다. 앱은 웹뷰라서 화면을 넘길 때마다 페이지를 새로 열고 시그널링 서버와도 새로 연결합니다. 그래서 통화 화면에서는 두 사람 모두 새 연결로 통화방에 들어갑니다.</p>
+<p>WebRTC 연결은 아티스트가 offer를 만들어 팬에게 보내는 데서 시작합니다. 기존 코드는 통화 화면에서도 아티스트가 팬보다 먼저 통화방에 들어온다고 가정했습니다. 전화를 건 쪽이 아티스트이니 자연스러워 보이는 가정이었고, 아티스트의 통화 화면은 이 가정에 따라 두 경우에만 offer를 만들었습니다. 팬의 통화 화면이 통화방에 들어온 뒤 한 번 더 보내는 수락 신호를 받았을 때와, 팬이 통화방에 들어왔다는 알림을 받았을 때입니다. 두 신호 모두 아티스트가 먼저 방에 있어야 받을 수 있습니다.</p>
+<figure class="technical"><figcaption>통화가 연결되는 순서</figcaption><div class="seq"><svg viewBox="0 0 640 486" role="img" aria-label="아티스트는 발신 화면에서 통화방에 들어가 전화를 겁니다. 팬이 수락하면 두 단말이 통화 화면으로 넘어가 통화방에 새로 들어가고, 아티스트가 먼저 들어와 있으면 팬 입장 알림이나 한 번 더 오는 수락 신호를 받아 offer를 만듭니다."><defs><marker id="so-h" viewBox="0 0 10 10" refX="10" refY="5" markerWidth="9" markerHeight="9" markerUnits="userSpaceOnUse" orient="auto"><path d="M0 0 L10 5 L0 10 z" class="head"></path></marker><marker id="so-hf" viewBox="0 0 10 10" refX="10" refY="5" markerWidth="9" markerHeight="9" markerUnits="userSpaceOnUse" orient="auto"><path d="M0 0 L10 5 L0 10 z" class="head fix"></path></marker></defs><text class="lane" x="110" y="24" text-anchor="middle">아티스트</text><text class="lane" x="330" y="20" text-anchor="middle">시그널링 서버</text><text class="lane-sub" x="330" y="37" text-anchor="middle">통화방</text><text class="lane" x="550" y="24" text-anchor="middle">팬</text><line class="life" x1="110" y1="48" x2="110" y2="472"></line><line class="life" x1="330" y1="48" x2="330" y2="472"></line><line class="life" x1="550" y1="48" x2="550" y2="472"></line><g class="pill"><rect x="68.75" y="55" width="82.5" height="22" rx="11"></rect><text x="110" y="70" text-anchor="middle">발신 화면</text></g><g class="pill"><rect x="508.75" y="55" width="82.5" height="22" rx="11"></rect><text x="550" y="70" text-anchor="middle">수신 화면</text></g><g class="msg"><line x1="110" y1="104" x2="329" y2="104" marker-end="url(#so-h)"></line><text x="220" y="96" text-anchor="middle">통화방 입장</text></g><g class="msg"><line x1="110" y1="140" x2="549" y2="140" marker-end="url(#so-h)"></line><circle cx="330" cy="140" r="2.8"></circle><text x="220" y="132" text-anchor="middle">전화 요청</text></g><g class="msg"><line x1="550" y1="176" x2="111" y2="176" marker-end="url(#so-h)"></line><circle cx="330" cy="176" r="2.8"></circle><text x="440" y="168" text-anchor="middle">수락</text></g><g class="band"><rect x="8" y="199" width="624" height="34" rx="8"></rect><text x="320" y="220.5" text-anchor="middle">두 단말 모두 통화 화면으로 넘어가며 시그널링 서버에 새로 연결</text></g><g class="pill"><rect x="68.75" y="245" width="82.5" height="22" rx="11"></rect><text x="110" y="260" text-anchor="middle">통화 화면</text></g><g class="pill"><rect x="508.75" y="245" width="82.5" height="22" rx="11"></rect><text x="550" y="260" text-anchor="middle">통화 화면</text></g><path class="bracket" d="M101 284 H96 V344 H101"></path><text class="tag" x="88" y="318" text-anchor="end">가정한 순서</text><g class="msg"><line x1="110" y1="296" x2="329" y2="296" marker-end="url(#so-h)"></line><text x="220" y="288" text-anchor="middle">통화방 재입장</text></g><g class="msg"><line x1="550" y1="332" x2="331" y2="332" marker-end="url(#so-h)"></line><text x="440" y="324" text-anchor="middle">통화방 입장</text></g><g class="msg"><line x1="330" y1="368" x2="111" y2="368" marker-end="url(#so-h)"></line><text x="220" y="360" text-anchor="middle">팬 입장 알림</text></g><g class="msg"><line x1="550" y1="404" x2="111" y2="404" marker-end="url(#so-h)"></line><circle cx="330" cy="404" r="2.8"></circle><text x="440" y="396" text-anchor="middle">수락 신호 (한 번 더)</text></g><g class="msg"><line x1="110" y1="448" x2="549" y2="448" marker-end="url(#so-h)"></line><circle cx="330" cy="448" r="2.8"></circle><text x="220" y="440" text-anchor="middle">offer (둘 중 하나를 받으면)</text></g></svg></div></figure>
+<p>하지만 팬이 수락하면 두 단말이 거의 동시에 통화 화면으로 넘어가므로, 어느 쪽이 먼저 통화방에 들어올지는 보장되지 않습니다. 연결 중에 아티스트 단말과 시그널링 서버의 연결이 끊겼다가 다시 붙어도, 아티스트가 팬보다 늦게 들어옵니다. 이렇게 아티스트가 늦으면 두 신호를 모두 받지 못해 offer가 영영 만들어지지 않고, 통화가 ’연결 중’에서 멈췄습니다.</p>
+<p><mark>그래서 들어오는 순서를 가정하지 않고, 아티스트가 늦게 들어온 경우를 시그널링 서버가 감지해 offer를 만들게 했습니다.</mark> 아티스트가 통화방에 들어올 때 이미 팬이 방에 있으면, 서버가 팬 대신 수락 신호를 아티스트에게 보냅니다. 정상 순서라면 아티스트가 들어올 때 방에 팬이 아직 없어 이 판정은 아무것도 돌려주지 않으므로, 기존 경로와 겹쳐 offer가 두 번 만들어지는 일은 없습니다. 이 판정 함수는 서버 코드에서 분리해 테스트 코드로 확인했습니다.</p>
+<figure class="technical"><figcaption>아티스트가 늦게 들어올 때</figcaption><div class="seq"><svg viewBox="0 0 640 392" role="img" aria-label="아티스트가 팬보다 늦게 통화방에 들어오면 팬 입장 알림과 수락 신호가 모두 아티스트에게 닿지 않아 offer가 만들어지지 않습니다. 수정 후에는 서버가 늦게 들어온 아티스트에게 수락 신호를 대신 보내 offer를 만들게 합니다."><defs><marker id="sl-h" viewBox="0 0 10 10" refX="10" refY="5" markerWidth="9" markerHeight="9" markerUnits="userSpaceOnUse" orient="auto"><path d="M0 0 L10 5 L0 10 z" class="head"></path></marker><marker id="sl-hf" viewBox="0 0 10 10" refX="10" refY="5" markerWidth="9" markerHeight="9" markerUnits="userSpaceOnUse" orient="auto"><path d="M0 0 L10 5 L0 10 z" class="head fix"></path></marker></defs><text class="lane" x="110" y="24" text-anchor="middle">아티스트</text><text class="lane" x="330" y="20" text-anchor="middle">시그널링 서버</text><text class="lane-sub" x="330" y="37" text-anchor="middle">통화방</text><text class="lane" x="550" y="24" text-anchor="middle">팬</text><line class="life faint" x1="110" y1="48" x2="110" y2="222"></line><line class="life" x1="110" y1="222" x2="110" y2="380"></line><line class="life" x1="330" y1="48" x2="330" y2="380"></line><line class="life" x1="550" y1="48" x2="550" y2="380"></line><g class="pill"><rect x="56.25" y="55" width="107.5" height="22" rx="11"></rect><text x="110" y="70" text-anchor="middle">화면 전환 중</text></g><g class="pill"><rect x="508.75" y="55" width="82.5" height="22" rx="11"></rect><text x="550" y="70" text-anchor="middle">통화 화면</text></g><g class="msg"><line x1="550" y1="106" x2="331" y2="106" marker-end="url(#sl-h)"></line><text x="440" y="98" text-anchor="middle">통화방 입장</text></g><g class="msg lost"><line x1="330" y1="142" x2="140" y2="142"></line><text x="235" y="134" text-anchor="middle">팬 입장 알림 (받을 사람 없음)</text></g><g class="cross"><line x1="127" y1="137" x2="137" y2="147"></line><line x1="127" y1="147" x2="137" y2="137"></line></g><g class="msg"><line x1="550" y1="178" x2="331" y2="178" marker-end="url(#sl-h)"></line><text x="440" y="170" text-anchor="middle">수락 신호</text></g><g class="cross"><line x1="311" y1="173" x2="321" y2="183"></line><line x1="311" y1="183" x2="321" y2="173"></line></g><text class="note" x="304" y="182" text-anchor="end">아티스트 없음</text><g class="msg"><line x1="110" y1="222" x2="329" y2="222" marker-end="url(#sl-h)"></line><text x="220" y="214" text-anchor="middle">통화방 재입장 (늦게)</text></g><line class="divider" x1="8" y1="248" x2="632" y2="248"></line><text class="tag" x="88" y="278" text-anchor="end">수정 전</text><text class="note" x="124" y="278" text-anchor="start">offer 없이 &#39;연결 중&#39;에서 멈춤</text><line class="divider" x1="8" y1="300" x2="632" y2="300"></line><text class="tag fix" x="88" y="330" text-anchor="end">수정 후</text><g class="msg fix"><line x1="330" y1="326" x2="111" y2="326" marker-end="url(#sl-hf)"></line><text x="220" y="318" text-anchor="middle">수락 신호를 대신 보냄</text></g><g class="msg fix"><line x1="110" y1="362" x2="549" y2="362" marker-end="url(#sl-hf)"></line><circle cx="330" cy="362" r="2.8"></circle><text x="220" y="354" text-anchor="middle">offer</text></g></svg></div></figure>
+<h3 id="시그널링-모니터">시그널링 모니터</h3>
+<p>이런 연결 문제는 원인을 찾기부터 어려웠습니다. 연결 협상이 어디까지 진행됐는지는 시그널링 서버의 메모리에만 있고, DB에는 통화가 시작되고 끝났다는 기록만 남기 때문입니다. 통화가 안 된다는 이야기를 들어도 협상 단계에서 멈췄는지, TURN 중계에서 막혔는지 가릴 방법이 없었습니다. <mark>그래서 연결 문제를 바로 파악하고, 실제 이벤트 중에도 지켜보며 대응할 수 있도록 시그널링 모니터를 만들었습니다.</mark></p>
+<p>시그널링 모니터는 시그널링 서버의 메모리에 있는 대기방과 통화방, 방마다 들어와 있는 참여자와 그 단말의 OS, 접속 시간을 관리자 콘솔에서 실시간으로 보여 줍니다. <mark>방마다 offer, answer, ICE 후보가 몇 번 오갔는지 세어 두어서, 협상이 어느 단계에서 멈췄는지 바로 알 수 있습니다.</mark> 연결이 직접 P2P인지, STUN을 거친 P2P인지, TURN 중계인지도 표시합니다. 참여자의 소켓이 모두 끊겼는데 방만 남은 경우는 ‘유령’ 방으로 따로 표시하고, 관리자가 그 자리에서 방을 정리할 수 있습니다. TURN으로 중계 중인 방은 coturn 로그에서 그 방의 중계 세션을 찾아 송수신량까지 보여 주고, TURN 서버 전체의 중계 속도와 CPU 사용률도 함께 표시합니다. 계정 없이 TURN 서버에 접속을 시도하는 외부 스캐너는 통화 세션과 섞이지 않게 따로 셉니다.</p>
+<figure class="screen-evidence"><img src="/images/dingdong-signaling-monitor.webp" width="1665" height="720" loading="lazy" alt="접속 소켓, 열린 방, offer·answer·ICE 누적 횟수 카드 아래에 TURN 중계 현황과 방 목록이 놓인 시그널링 모니터 화면"/><figcaption>시그널링 모니터 화면입니다. 통화가 없는 시간에 찍어서 방 목록은 비어 있습니다. 위에는 접속 소켓, 열린 방, offer·answer·ICE 누적 횟수 같은 시그널링 서버 상태가 있고, 가운데에는 통화 연결 경로, 중계 세션, coturn CPU 같은 TURN 중계 현황이 있습니다.</figcaption></figure>
+<p><mark>모니터를 붙이면서도 운영 중인 통화에 영향을 주지 않는 것을 원칙으로 삼았습니다.</mark> 시그널링 서버의 조회 API는 같은 서버 안에서 온 요청에만 응답하고, 콘솔은 관리자 세션을 확인하는 PHP를 거쳐서만 조회합니다. coturn 로그는 상시로 읽지 않고, 관리자가 TURN 상세 창을 열어 둔 동안에만 새로 쌓인 부분을 이어서 읽습니다. 조회가 실패해도 오류 대신 실패 상태를 돌려줘서, 모니터 화면의 폴링이 멈추지 않게 했습니다.</p>
+<p>모니터가 보여 주는 값이 정확한지도 확인했습니다. 연결 경로는 각 단말이 WebRTC 통계(<code>getStats</code>)를 읽어 서버에 보고하는데, 연결 직후에는 통계에 연결된 후보 쌍이 아직 잡히지 않는 경우가 흔합니다. 기존 코드는 통계를 한 번만 읽고 실패하면 보고를 건너뛰어서, 한쪽 참여자가 통화 내내 ’대기’로 표시됐습니다. 그래서 짧은 간격으로 몇 번 다시 읽어 경로를 확정하게 했습니다.</p>
+<h2 id="정해진-시간만큼-정확히-흐르게-하기">정해진 시간만큼 정확히 흐르게 하기</h2>
+<p>통화가 연결되면 양쪽 단말이 1초마다 서버에 하트비트를 보내고, 서버는 하트비트가 7초 이상 오지 않는 쪽을 연결이 끊긴 것으로 봅니다. <mark>통화 시간은 팬이 산 것이므로, 서버는 팬의 하트비트가 올 때마다 통화 시작 시각부터 지난 시간을 다시 계산해 기록합니다.</mark> 이 기록만큼 통화권이 깎이므로, 1초도 어긋나면 안 됐습니다.</p>
+<h3 id="유료-시간은-양쪽-화면이-뜬-뒤부터">유료 시간은 양쪽 화면이 뜬 뒤부터</h3>
+<p>원래는 영상이 먼저 준비된 단말에서 카운트다운이 시작됐습니다. 그러면 상대 화면이 아직 준비 중인데도 유료 시간이 흘러, 팬 입장에서는 아티스트의 얼굴을 보기도 전에 통화권이 줄어드는 셈이었습니다.</p>
+<p><mark>그래서 양쪽 화면에 상대 영상이 실제로 뜬 순간을 통화 시작으로 정했습니다.</mark> 각 단말은 상대 영상의 첫 프레임이 화면에 그려지면 서버에 알리고, 서버는 양쪽 신호가 모두 모였을 때 두 단말에 동시에 시작 신호를 보냅니다. 타이머는 이 시작 신호로만 시작하므로, 한쪽 화면만 뜬 상태에서는 유료 시간이 흐르지 않습니다.</p>
+<h3 id="5분-통화가-299초로-기록되던-이유">5분 통화가 299초로 기록되던 이유</h3>
+<p>테스트콜 시연 뒤에도 통화 시간 기록에는 문제가 남아 있었습니다. 2026년 10월 이벤트에서 5분 통화가 끝났는데도 기록이 299초로 닫힌 사례가 나왔습니다. 원인은 두 가지였습니다.</p>
+<p>첫째, 아티스트 쪽 타이머가 먼저 끝나면 곧바로 통화 종료 신호를 보냈는데, 이 신호가 팬의 마지막 하트비트를 막았습니다. 서버는 기록을 닫을 때 마지막 하트비트가 적어 둔 값을 그대로 복사했기 때문에, 1초 전 값인 299초로 닫았습니다. 둘째, 통화가 시작될 때 양쪽이 거의 동시에 보내는 첫 하트비트의 처리 순서가 엇갈리면, 서버가 시작 시각을 다음 박자인 1초 뒤에 찍었습니다. 같은 이벤트의 여러 통화에서 이 현상이 보였습니다.</p>
+<p>그래서 기록 방식과 화면 타이머를 네 군데 고쳤습니다. 먼저 <mark>기록을 닫을 때 마지막 하트비트 값을 복사하지 않고, 서버가 시작 시각부터 지금까지를 다시 계산해 닫게 했습니다.</mark> 종료 판단은 팬 쪽 타이머를 기준으로 삼았습니다. 아티스트 타이머가 먼저 끝나도 바로 종료 신호를 보내지 않고 팬의 종료 신호를 최대 5초 기다리며, 그래도 오지 않으면 아티스트 쪽이 대신 기록을 닫습니다. 또 팬이 타이머를 시작하며 보내는 하트비트에 표시를 달아, 서버가 처리 순서와 상관없이 그 하트비트에서 바로 시작 시각을 찍게 했습니다. 이 하트비트는 서버가 양쪽 화면이 뜬 것을 확인한 뒤에만 나가므로, 그 자체로 통화가 시작됐다는 증거입니다.</p>
+<p>마지막으로 화면 타이머를 서버 값에 맞추는 방식을 바꿨습니다. 이전에는 화면의 남은 시간이 서버보다 많든 적든 5초 넘게 차이 나면 서버 값을 따랐습니다. 그런데 <mark>폰의 타이머는 늦어질 수는 있어도 빨라지지는 않으므로, 화면에 남은 시간은 서버보다 많아지는 쪽으로만 어긋납니다.</mark> 반대로 서버 값이 더 많다면 늦게 도착한 응답이므로, 그 값을 따르면 남은 시간이 거꾸로 올라갑니다. 그래서 화면에 남은 시간이 서버보다 2초 이상 많을 때만 서버 값으로 내리게 했습니다.</p>
+<h3 id="통화-품질-로그와-그래프">통화 품질 로그와 그래프</h3>
+<p>시그널링 모니터는 서버가 아는 것, 즉 통화방, 연결 협상, 중계 경로까지만 보여 줍니다. 영상은 우리 서버를 지나지 않으므로, 통화 중에 각 단말에서 영상이 끊겼는지, 지연이 얼마나 생겼는지는 단말만 압니다. 이 한계는 2026년 10월 이벤트에서 통화가 끊겼을 때 드러났습니다. 서버 로그로는 원인을 가릴 수 없었습니다. <mark>네트워크가 끊긴 경우와 폰이 멈춘 경우가 서버 로그에는 똑같이 하트비트 공백으로만 보였기 때문입니다.</mark></p>
+<p>그래서 통화 중인 단말이 하트비트마다 자기 상태를 실어 보내게 했습니다. 일련번호와 폰 시각, 타이머 지연, 화면이 보이는지 여부, 직전 하트비트의 왕복 시간에 더해, WebRTC 통계에서 왕복 지연, 패킷 손실, 수신 fps, 지터, 영상 멈춤, 화질이 제한된 이유, 연결 경로를 요약해 담습니다. 전송에 실패한 기록은 버리지 않고 다음 하트비트에 함께 보냅니다. <mark>네트워크가 끊긴 동안 쌓인 기록이 나중에라도 도착하면, 그 공백이 네트워크 단절이었는지 폰이 멈춘 것이었는지 갈립니다.</mark> 앱이 통화 중에 종료돼도 기록이 남도록 매 박자 단말에 저장해 두고, 다음에 앱을 열면 남은 기록을 서버로 올립니다.</p>
+<p>이 기능은 통화를 방해하지 않는 것이 먼저였습니다. 측정 코드의 어떤 실패도 통화와 하트비트를 막지 않게 했고, 서버는 하트비트에 응답을 보낸 뒤에 기록을 파일로 남겨 과금과 통화 판정에 영향을 주지 않습니다.</p>
+<p>모은 기록은 관리자 콘솔에서 통화별 그래프로 봅니다. 아티스트와 팬 두 단말의 기록을 한 시간축에 그리는데, 두 단말의 시계가 서로 다르므로 서버 시계에 맞춰 정렬합니다. 단말은 하트비트를 만들자마자 보내므로, 서버가 받은 시각과 폰 시각의 차이 중 가장 작은 값을 그 폰과 서버의 시계 차이로 보았습니다. 맨 위에는 통화 회차마다 연결 과정을 카드로 보여 줘서, 연결이 어느 단계에서 오래 걸렸는지와 어떤 경로를 시도했는지 확인할 수 있습니다.</p>
+<figure class="screen-evidence"><img src="/images/dingdong-perf-graph.webp" width="1200" height="819" loading="lazy" alt="아티스트와 팬 두 기기의 통화 경로 왕복 지연, 수신 영상 손실률, 하트비트 왕복 시간을 한 시간축에 겹쳐 그린 통화 품질 그래프"/><figcaption>한 통화의 품질 그래프입니다. 아티스트와 팬의 이름은 가렸습니다. 아티스트(iPhone)와 팬(Android) 두 기기의 통화 경로 왕복 지연, 수신 영상 손실률, 하트비트 왕복 시간을 서버 시계에 맞춰 한 시간축에 그립니다. 이 통화에서는 11시 22분 이후 지연과 손실이 함께 커지는 구간이 보입니다.</figcaption></figure>
+<p><mark>이 로그로 통화 품질을 수치로 비교할 수 있는 기준이 생겼습니다.</mark> 이벤트마다, 단말 OS마다, 연결 경로마다 지연과 손실을 비교해 개선 효과를 확인할 수 있습니다. 동료가 만든 통화 시뮬레이터도 같은 형식으로 측정값을 보내게 되었고, 저는 시뮬레이터 결과를 같은 콘솔 그래프와 TURN 모니터에서 볼 수 있게 연결했습니다.</p>
+<h2 id="앱이-꺼져-있어도-전화-받기">앱이 꺼져 있어도 전화 받기</h2>
+<p>테스트콜 시연 뒤에 남은 마지막 문제는 팬이 앱 밖에 있을 때 전화를 받는 일이었습니다. 그때까지는 대기방 화면을 켜 두어야 수신 화면이 떠서, 순서를 기다리다 다른 앱으로 나가거나 화면을 끄면 전화가 와도 알 수 없었습니다. 그래서 2026년 7월부터 Android 앱에 FCM 푸시와 통화 수신 기능을 붙였습니다. <mark>목표는 실제 전화와 같은 경험이었습니다.</mark> 다른 앱을 쓰는 중이면 화면 위에 수신 알림이 떠서 30초 동안 울리고, 화면이 잠겨 있으면 전체 화면으로 수신 화면이 뜨며, 알림에서 바로 수락하거나 거절할 수 있어야 했습니다.</p>
+<p>서버 쪽 발송도 함께 만들었습니다. 통화 한 번에 수신, 부재중, 정리 순서로 푸시가 나가고, 서버는 통화 시도마다 고유한 키와 순번을 붙여 보냅니다. 대기방 상태의 뜻도 넓혀, 대기방 밖에 있는 팬이라도 푸시를 받을 수 있으면 아티스트의 통화 목록에서 전화를 걸 수 있게 했고, 서버의 통화 시작 API도 같은 기준으로 허용합니다.</p>
+<h3 id="실제-전화처럼-울리게-하기">실제 전화처럼 울리게 하기</h3>
+<p>요구 사항마다 Android가 기본으로 해 주지 않는 부분이 있었습니다.</p>
+<table>
+<thead>
+<tr>
+<th>요구</th>
+<th>막힌 점</th>
+<th>선택</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>30초 뒤 수신 알림을 부재중 알림으로 바꾼다</td>
+<td>FCM 알림 메시지는 앱이 백그라운드일 때 시스템이 직접 그려서 앱이 손댈 수 없다</td>
+<td>데이터 메시지만 받아 앱이 알림을 직접 그린다</td>
+</tr>
+<tr>
+<td>30초 동안 계속 울린다</td>
+<td>알림 채널의 소리는 한 번만 재생된다</td>
+<td>포그라운드 서비스에서 벨소리를 직접 반복 재생한다</td>
+</tr>
+<tr>
+<td>수신 알림이 화면 위에 계속 떠 있다</td>
+<td>실기기에서 헤드업 알림이 5초쯤 뒤 저절로 접혔다</td>
+<td>전체 화면 수신 화면을 만들어 알림에 연결한다</td>
+</tr>
+<tr>
+<td>앱을 열지 않고 거절한다</td>
+<td>다른 서버 통신은 모두 웹뷰가 하는데, 거절할 때는 웹뷰를 띄우지 않는다</td>
+<td>앱이 서버 API를 직접 부르되, 웹뷰의 세션 쿠키를 빌려 인증한다</td>
+</tr>
+</tbody>
+</table>
+<p>포그라운드 서비스의 유형은 <code>shortService</code>로 골랐습니다. 최대 3분이라 30초 벨에는 충분하고, 유형별 권한을 따로 요구하지 않는 유일한 유형이기 때문입니다. 통화용 유형인 <code>phoneCall</code>은 시스템 통화 연동(<code>ConnectionService</code>)까지 구현해야 해서 이 용도에는 과했습니다.</p>
+<p>Android에서 자동으로 접히지 않는 헤드업 알림은 전체 화면 인텐트가 달린 알림뿐입니다. 그래서 잠금 화면에 띄울 전체 화면 수신 화면을 만들어 알림에 연결했습니다. <mark>OS는 화면이 잠겨 있을 때만 이 화면을 띄우므로, 화면을 하나 더 만들어도 사용 중인 사람의 화면을 가리지 않습니다.</mark> Android 14부터는 이 기능을 사용자가 직접 허용해야 합니다. Play Console에 통화 앱으로 신고하는 방법도 있었지만, 앱에서 한 번만 설정 화면으로 안내하는 쪽을 택했습니다. 허용하지 않아도 앱이 멈추지는 않습니다.</p>
+<p>푸시가 뒤바뀐 순서로 도착하는 경우도 따로 막아야 했습니다. FCM은 순서를 보장하지 않아서, 부재중 푸시가 수신 푸시보다 먼저 도착할 수 있습니다. 그대로 그리면 부재중 알림이 뜬 뒤에 벨이 울립니다. <mark>그래서 통화별로 마지막에 처리한 순번을 기억해 두고, 그보다 낮은 순번의 푸시는 버리게 했습니다.</mark> 같은 순번은 통과시킵니다. 팬이 앱 안 팝업을 보다가 다른 앱으로 나가면 서버가 수신 푸시를 같은 순번으로 다시 보내기 때문입니다. 30초가 지나 앱이 수신 알림을 지우는 시점과 서버의 부재중 푸시가 도착하는 시점이 거의 겹쳐서, 방금 그린 부재중 알림이 지워지는 경합도 있었습니다. 지금 떠 있는 알림이 무엇인지 기록해 두고, 아직 수신 알림일 때만 지우게 해서 막았습니다. 푸시 해석과 순번 판정 같은 핵심 로직은 단위 테스트로 고정했습니다.</p>
+<table>
+<thead>
+<tr>
+<th>상황</th>
+<th>결과</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>다른 앱을 쓰는 중</td>
+<td>화면 위에 수신 알림이 뜨고 30초 동안 울림, 알림에서 <code>[수락]</code> <code>[거절]</code></td>
+</tr>
+<tr>
+<td>화면이 잠겨 있음</td>
+<td>전체 화면 수신 화면</td>
+</tr>
+<tr>
+<td>30초 동안 받지 않음</td>
+<td>같은 자리의 알림이 부재중 알림으로 바뀜</td>
+</tr>
+<tr>
+<td>부재중 푸시가 수신 푸시보다 먼저 도착</td>
+<td>늦게 온 수신 푸시는 버림</td>
+</tr>
+<tr>
+<td><code>[거절]</code></td>
+<td>벨이 멈추고 알림이 사라지며, 앱은 열리지 않음</td>
+</tr>
+<tr>
+<td>Android 14 이상에서 전체 화면 알림을 허용하지 않음</td>
+<td>헤드업 알림이 몇 초 뒤 접힘 (권한 없이는 해결할 수 없음)</td>
+</tr>
+</tbody>
+</table>
+<h3 id="수락을-눌렀는데-통화-화면으로-가지-않던-문제">수락을 눌렀는데 통화 화면으로 가지 않던 문제</h3>
+<p>잠금 화면에서 수락을 눌렀는데 통화 화면으로 바로 가지 않고, 앱이 처음부터 다시 열리는 경우가 있었습니다. 서버 로그를 보니 웹뷰는 첫 주소부터 다시 로드됐고, 웹에는 수락 딥링크가 한 건도 도착하지 않았습니다.</p>
+<p>원인은 Android의 태스크 동작이었습니다. 전체 화면 수신 화면은 메인 화면과 다른 태스크에서 뜹니다. 수락을 누르면 메인 화면을 띄우는데, 메인 화면은 앱 아이콘으로 여는 시작 화면이라 Android는 새로 만들지 않고 기존 태스크를 앞으로 가져옵니다. 그사이 앱 프로세스가 종료되고 태스크만 남아 있었다면, 시스템은 그 태스크를 처음 만든 인텐트, 즉 앱 아이콘을 눌렀을 때의 인텐트로 화면을 다시 만듭니다. 그래서 수락 정보를 실어 보낸 인텐트는 아예 도착하지 않았습니다.</p>
+<p><mark>그래서 수락 정보를 인텐트에만 싣지 않고, 메모리와 디스크에도 한 벌 더 저장해 두었습니다.</mark> 메인 화면은 인텐트에서 먼저 찾고, 없으면 저장해 둔 것을 꺼냅니다. 인텐트로 정상 도착하면 저장분을 지워 같은 수락이 두 번 처리되지 않게 했습니다. 다만 오래된 수락을 되살리면 이미 끝난 통화에 들어가게 되므로, 벨이 30초면 끊긴다는 점을 고려해 1분의 유효 시간을 두었습니다. 유효 시간은 기기 시계가 아니라 부팅 후 경과 시간(<code>elapsedRealtime</code>)으로 재서, 사용자가 시계를 바꿔도 흔들리지 않고 재부팅하면 저장분이 자동으로 만료되게 했습니다.</p>
+<p>진단 로그도 함께 넣었습니다. 딥링크를 웹으로 넘기다 실패하면 웹뷰가 아직 준비되지 않았는지, 브리지가 없는 페이지인지, 웹 버전이 낮은지, 웹이 예외를 던졌는지가 로그에서 구분됩니다. 이 수정은 1.2.5 버전으로 배포했습니다.</p>
+<h3 id="앱에-들어가도-남아-있던-배지">앱에 들어가도 남아 있던 배지</h3>
+<p>앱에 들어오면 아이콘 배지를 0으로 만드는 코드가 있는데도, 삼성 단말에서는 배지가 그대로 남았습니다. 확인해 보니 Android 8.0 이후 삼성 One UI를 비롯한 대부분의 런처는 앱이 보낸 배지 숫자를 무시하고, 알림창에 남아 있는 알림으로 배지를 계산합니다. <mark>코드가 아니라 OS의 동작이었으므로, 앱에 들어올 때 배지 숫자와 함께 알림창의 알림도 지우도록 설계를 바꿨습니다.</mark> 배지 숫자도 서버가 보내는 값 대신 앱이 받은 알림을 직접 세게 했습니다. 서버는 사용자가 알림을 지웠는지 알 수 없어서, 서버 값으로는 배지를 줄일 수 없기 때문입니다.</p></div><a class="back-link bottom" href="/">홈으로 돌아가기</a></article></main><footer class="site-footer content"><span>© 2026 박승진</span></footer><script>
+      (() => {
+        const button = document.querySelector(".theme-toggle");
+        if (!button) return;
+        const root = document.documentElement;
+        const media = matchMedia("(prefers-color-scheme: dark)");
+        const current = () =>
+          root.dataset.theme || (media.matches ? "dark" : "light");
+        const label = () =>
+          button.setAttribute(
+            "aria-label",
+            current() === "dark" ? "라이트 모드로 전환" : "다크 모드로 전환",
+          );
+        button.hidden = false;
+        label();
+        button.addEventListener("click", () => {
+          const next = current() === "dark" ? "light" : "dark";
+          root.dataset.theme = next;
+          try {
+            localStorage.setItem("theme", next);
+          } catch (e) {}
+          label();
+        });
+        media.addEventListener("change", label);
+      })();
+    </script></body></html>

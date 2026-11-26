@@ -1,0 +1,3 @@
+User-agent: *
+Allow: /
+Sitemap: https://mousepotato03.github.io/sitemap.xml

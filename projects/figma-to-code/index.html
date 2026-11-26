@@ -1,0 +1,102 @@
+<!DOCTYPE html><html lang="ko"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>Figma-to-Code | 박승진</title><meta name="description" content="외주 웹사이트를 만들며 반복하던 Figma 시안 분석과 PHP·CSS 초안 작성을 팀원이 명령 하나로 실행할 수 있게 만든 Claude Code 하네스입니다."><meta name="theme-color" content="#f3f6fb" media="(prefers-color-scheme: light)"><meta name="theme-color" content="#0a0e1a" media="(prefers-color-scheme: dark)"><link rel="canonical" href="https://mousepotato03.github.io/projects/figma-to-code/"><meta property="og:type" content="website"><meta property="og:locale" content="ko_KR"><meta property="og:title" content="Figma-to-Code | 박승진"><meta property="og:description" content="외주 웹사이트를 만들며 반복하던 Figma 시안 분석과 PHP·CSS 초안 작성을 팀원이 명령 하나로 실행할 수 있게 만든 Claude Code 하네스입니다."><meta property="og:url" content="https://mousepotato03.github.io/projects/figma-to-code/"><meta property="og:image" content="https://mousepotato03.github.io/images/nibec-final-hero.webp"><link rel="icon" href="/favicon.svg" type="image/svg+xml"><script>
+      try {
+        const saved = localStorage.getItem("theme");
+        if (saved === "light" || saved === "dark")
+          document.documentElement.dataset.theme = saved;
+      } catch (e) {}
+    </script><link rel="stylesheet" href="/_astro/Base.Bn7zN9Kk.css"></head><body><a class="skip" href="#main">본문으로 건너뛰기</a><header class="site-header content" id="top"><a class="handle" href="/">@mousepotato03<span class="sr"> 홈</span></a><button class="theme-toggle" type="button" hidden><svg class="moon" viewBox="0 0 24 24" aria-hidden="true"><path d="M20.4 14.6A8.5 8.5 0 0 1 9.4 3.6a8.5 8.5 0 1 0 11 11Z"></path></svg><svg class="sun" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="4.2"></circle><path d="M12 2.5v2M12 19.5v2M2.5 12h2M19.5 12h2M5.3 5.3l1.4 1.4M17.3 17.3l1.4 1.4M5.3 18.7l1.4-1.4M17.3 6.7l1.4-1.4"></path></svg></button></header><main id="main" tabindex="-1"><article class="page content"><a href="/" class="back-link">홈으로</a><header class="page-head"><h1>Figma-to-Code</h1><p>Claude Code에 섹션별 구현을 맡기고 사람이 최종 디자인을 검수했습니다. NIBEC 홈페이지는 이 과정을 거쳐 약 2~3일에 완성했습니다.</p></header><nav class="toc" aria-label="이 페이지 목차"><p>목차</p><ol><li><a href="#반복되던-초안-작업을-자동화하기">반복되던 초안 작업을 자동화하기</a></li><li><a href="#페이지를-섹션으로-나눠-맡기기">페이지를 섹션으로 나눠 맡기기</a></li><li><a href="#시안을-css로-옮기는-규칙">시안을 CSS로 옮기는 규칙</a></li><li><a href="#nibec-적용-결과와-남은-한계">NIBEC 적용 결과와 남은 한계</a></li></ol></nav><div class="prose"><section><dl class="overview-dl"><div><dt>기간</dt><dd>2025.12 — 2026.01</dd></div><div><dt>역할</dt><dd>외주 제작 과정의 병목을 발견해 도구를 먼저 만들어 검증한 뒤, 회사에 적용을 제안하고 팀에 이관</dd></div><div><dt>기술</dt><dd>Claude Code, Figma MCP, Python, PHP, CSS</dd></div></dl></section><figure class="visual figma"><div class="stage browser-stage"><span class="plate-label"><span class="device-symbol window-symbol"></span>NIBEC 홈페이지</span><div class="browser-pair"><div class="browser-shot"><div class="browser-bar"><i></i><i></i><i></i><span>figma mcp</span></div><div class="browser-crop"><img src="/images/nibec-draft-hero.webp" width="1440" height="817" loading="eager" alt="NIBEC"></div></div><div class="browser-shot"><div class="browser-bar"><i></i><i></i><i></i><span>figma mcp + figma-to-code</span></div><div class="browser-crop"><img src="/images/nibec-final-hero.webp" width="1440" height="817" loading="eager" alt="NIBEC"></div></div></div></div></figure><p class="source-caption">같은 1920px 화면에서 본 NIBEC 첫 화면입니다. Figma MCP만 썼을 때는 로고 글자와 스크롤 아이콘이 깨지고, 레이아웃이 잘못 구현되어 배경 이미지 가운데에 경계선이 생겼습니다.</p><h2 id="반복되던-초안-작업을-자동화하기">반복되던 초안 작업을 자동화하기</h2>
+<p>회사에서 외주 웹사이트 제작에 참여했을 때, 작업자마다 Figma 시안을 열고 머리글과 본문을 나눈 다음 첫 페이지를 PHP와 CSS로 옮기는 과정을 반복했습니다. 사이트마다 다른 것은 디자인인데, 초안을 만들기까지의 일은 거의 같았습니다. <mark>그래서 누가 요청하기 전에 이 구간을 자동화하는 도구를 먼저 만들어 테스트해 봤습니다.</mark></p>
+<p>처음에는 Figma MCP로 페이지 전체의 디자인 정보를 한 번에 읽어 Claude Code가 코드를 쓰게 했는데, 결과물의 품질이 크게 떨어졌습니다. 원인은 크게 두 갈래였습니다. 하나는 도구가 디자인 정보를 충분히 전달하지 못하는 문제였고, 다른 하나는 정보를 받아도 그대로 옮기면 화면이 무너지는 문제였습니다. 앞의 문제는 작업을 나누는 방식으로, 뒤의 문제는 변환 규칙으로 풀었습니다.</p>
+<p>두 문제를 풀어 쓸 만한 결과물이 나오기 시작하자, 회사에 이 도구를 써 보라고 권하고 실제 외주 작업에 적용하자고 제안했습니다. 이후 도구는 팀에 넘겼습니다. 이 글은 제가 넘긴 시점의 <a href="https://github.com/mousepotato03/figma-to-code">공개 저장소</a>를 기준으로 합니다. 이후에는 회사 저장소로 옮겨져 팀에서 유지보수하고 있어서, 지금 쓰이는 버전과는 다를 수 있습니다.</p>
+<h2 id="페이지를-섹션으로-나눠-맡기기">페이지를 섹션으로 나눠 맡기기</h2>
+<p>작업은 Claude Code의 사용자 정의 명령과 서브에이전트로 나눴습니다. 서브에이전트는 메인 세션과 분리된 컨텍스트에서 따로 일하는 보조 에이전트입니다. 전체 흐름은 아래와 같습니다.</p>
+<figure class="technical"><figcaption>디자인 입력에서 검수까지</figcaption><ol class="steps"><li><b>구조 분석</b><span>페이지를 섹션으로 나누고 체크리스트를 만든다.</span></li><li><b>섹션 구현</b><span>공통 규칙에 따라 PHP와 CSS를 생성한다.</span></li><li><b>결과 통합</b><span>완료 상태를 확인하고 CSS와 공통 구성 요소를 합친다.</span></li><li><b>사람의 검수</b><span>시안의 의도, 반응형 배치와 콘텐츠를 확인한다.</span></li></ol></figure>
+<h3 id="한-번에-담기지-않는-디자인-정보">한 번에 담기지 않는 디자인 정보</h3>
+<p>Figma MCP 도구는 한 번에 내보낼 수 있는 양이 작습니다. 큰 페이지를 통째로 요청하면 디자인 정보가 다 담기지 않은 듬성듬성한 데이터만 돌아왔습니다. 이미지 밑에 이미지를 여러 장 깔아 둔 구성은 계층 정보에 노이즈로 섞여 들어왔습니다. 프로젝트를 시작한 2025년 12월 당시 모델은 컨텍스트 윈도우가 200K 토큰이라, 페이지 전체를 한 세션에서 다루기도 어려웠습니다.</p>
+<p><mark>그래서 요청 하나가 다루는 범위를 섹션 하나로 줄였습니다.</mark> 먼저 분석 에이전트가 페이지를 헤더, 푸터 같은 공통 컴포넌트와 일회성 섹션으로 나누고, 각 노드의 ID, 위치, 크기를 JSON 체크리스트에 기록합니다. 그다음 섹션 하나마다 구현 에이전트 하나를 붙여, 담당 섹션의 정보와 공통 변환 규칙만 넘깁니다. <mark>요청이 섹션 크기로 작아지자 응답이 잘리지 않았고, 계층 노이즈와 컨텍스트 사용량도 함께 줄었습니다.</mark> 여러 페이지에 반복되는 헤더와 푸터는 한 번만 만들어 공통으로 씁니다.</p>
+<h3 id="메인-세션의-컨텍스트-아끼기">메인 세션의 컨텍스트 아끼기</h3>
+<p>섹션을 나누자 이번에는 메인 세션이 문제였습니다. 서브에이전트의 결과를 기본 방식(<code>TaskOutput</code>)으로 받아 오면, 섹션마다 작업 결과가 메인 세션의 컨텍스트에 쌓입니다. 섹션이 많은 사이트일수록 메인 세션의 컨텍스트가 빠르게 찹니다.</p>
+<p><mark>그래서 서브에이전트는 결과를 출력하지 않고, 작업이 끝나면 완료(<code>.done</code>)나 실패(<code>.failed</code>) 마커 파일만 남기게 했습니다.</mark> 메인 세션은 <a href="https://github.com/mousepotato03/figma-to-code/blob/cb97e44d0be18616bd3f01a28193a84a0b63ac67/.claude/scripts/wait_files.py">마커 파일 개수를 확인하는 스크립트</a>로 진행 상황만 봅니다. 마커는 작업 이력도 겸해서, 이미 끝난 페이지와 공통 컴포넌트는 다시 실행할 때 건너뜁니다. <mark>작업이 중간에 멈춰도 처음부터 다시 돌릴 필요가 없습니다.</mark></p>
+<h3 id="호출-한도에-맞춘-실행-방식">호출 한도에 맞춘 실행 방식</h3>
+<p>여러 섹션을 한꺼번에 병렬로 요청하자 Figma API의 호출 한도에 걸려 429 응답이 돌아왔습니다. 그래서 섹션을 10개씩 묶어 실행하고 묶음 사이에 60초를 두었습니다. 429를 받으면 응답에 담긴 대기 시간(<code>Retry-After</code>)만큼 기다렸다가 최대 3번 다시 시도합니다.</p>
+<p>그래도 사이트 전체처럼 섹션이 많으면 병렬 실행은 한도에 쉽게 걸려 불안정했습니다. 그래서 명령을 두 가지로 나눴습니다. 몇 페이지만 빠르게 뽑을 때는 묶음 단위로 병렬 실행하는 명령을 쓰고, 사이트 전체 초안을 맡길 때는 <a href="https://github.com/mousepotato03/figma-to-code/blob/cb97e44d0be18616bd3f01a28193a84a0b63ac67/.claude/commands/figma-serial-full-pipeline.md">섹션을 하나씩 처리하는 직렬 명령</a>을 씁니다. <mark>한도가 초기화되는 시간을 고려하면, 오래 걸리더라도 직렬로 끝까지 가는 쪽이 안전했습니다.</mark> 작업자는 페이지 URL 목록만 넘기면 되고, 섹션이 끝날 때마다 다음 명령을 입력할 필요가 없습니다.</p>
+<h2 id="시안을-css로-옮기는-규칙">시안을 CSS로 옮기는 규칙</h2>
+<p>작업을 나눠 정보를 제대로 받게 된 뒤에도, 받은 정보를 그대로 옮기면 화면이 무너지는 문제가 남았습니다. <mark>구현 에이전트가 섹션마다 제각각 판단하지 않도록, 공통 변환 규칙을 문서로 정해 모든 에이전트에 넘겼습니다.</mark> 규칙 전문은 <a href="https://github.com/mousepotato03/figma-to-code/blob/cb97e44d0be18616bd3f01a28193a84a0b63ac67/.claude/docs/figma-to-css.md">저장소의 변환 규칙 문서</a>에 있습니다.</p>
+<h3 id="크기와-좌표를-믿을-수-있는-값으로">크기와 좌표를 믿을 수 있는 값으로</h3>
+<p>디자인 정보를 읽는 도구(<code>get_design_context</code>)는 크기를 <code>size-full</code> 같은 상대값으로 돌려줘서, 실제 픽셀 크기를 알 수 없었습니다. <mark>그래서 크기는 이 값 대신, 분석 단계에서 다른 도구(<code>get_metadata</code>)로 읽어 체크리스트에 적어 둔 실제 픽셀값을 쓰게 했습니다.</mark> 예를 들어 높이가 400px인 섹션은 <code>height: 100%</code>가 아니라 <code>25rem</code>으로 옮깁니다.</p>
+<p>시안이 Auto Layout 없이 그려져 있으면, 도구의 출력이 절대좌표와 고정 px로 채워집니다. 그대로 옮기면 화면 폭을 조금만 줄여도 메뉴와 카드 제목이 잘리고 요소가 겹칩니다. 그래서 Auto Layout은 Flexbox로 일대일 대응시키고, 마스킹 때문에 좌표를 비정상적으로 쓴 이미지는 좌표를 무시한 채 부모 안 가운데에 놓고 <code>object-fit: cover</code>로 채우게 했습니다.</p>
+<h3 id="모바일-시안이-없을-때">모바일 시안이 없을 때</h3>
+<p>처음에는 <code>clamp()</code>로 거의 모든 크기를 화면 폭에 따라 유동적으로 잡았습니다. 그런데 이렇게 하면 데스크톱에서도 디자인이 시안과 달라졌습니다. 그래서 구간을 나눴습니다. <mark>1200px 이상인 데스크톱에서는 시안의 px 값을 rem으로 그대로 옮기고, 그보다 좁아지면 %나 vw 같은 상대값으로 바꿉니다.</mark> 1920px보다 넓은 화면에서는 콘텐츠 폭을 1920px로 묶어 디자인이 늘어지지 않게 했습니다.</p>
+<p><mark>모바일 시안이 없을 때는 에이전트가 짐작으로 배치하지 않도록 네 단계 규칙을 정했습니다.</mark> 가로로 놓였던 섹션과 카드 목록은 세로로 쌓고, 고정 너비 요소는 화면 폭을 꽉 채우게 합니다. 왼쪽에서 오른쪽이던 순서는 위에서 아래로 바꾸고, 버튼과 링크는 손가락으로 누르기 쉽게 높이를 44px 이상으로 둡니다. 원래 세로였던 요소는 건드리지 않는다는 예외도 규칙에 적어 두었습니다.</p>
+<h2 id="nibec-적용-결과와-남은-한계">NIBEC 적용 결과와 남은 한계</h2>
+<p>기존에 팀에서 비슷한 규모의 사이트를 만들 때는 1주일 이상 걸렸습니다. <mark>NIBEC 홈페이지는 이 도구로 초안을 생성한 뒤 사람이 검수하고 보완해 약 2~3일에 완성했습니다.</mark> 치과 홈페이지 같은 다른 외주 사이트에도 이 도구를 썼습니다.</p>
+<p>검수는 Figma 원본과 결과물을 나란히 놓고 사람이 직접 비교했습니다. <mark>눈으로 보는 데서 그치지 않고, 브라우저 개발자 도구로 색상, 글꼴, 간격 같은 값을 시안의 디자인 토큰과 하나씩 대조했습니다.</mark></p>
+<p>아래는 연구 영역 섹션을 같은 1920px 화면에서, Figma MCP만 썼을 때와 Figma-to-Code를 더했을 때로 나눠 비교한 것입니다. MCP만으로도 원형 카드와 연결선 배치는 잡혔지만, 머리글과 가운데 원의 로고는 글자 일부가 겹쳐 깨졌습니다.</p>
+<figure class="comparison"><figcaption>NIBEC 연구 영역 · 1920px 화면에서 비교</figcaption><div><div><span>figma mcp</span><img src="/images/nibec-draft-research.webp" width="1440" height="817" loading="lazy" alt="NIBEC"></div><div><span>figma mcp + figma-to-code</span><img src="/images/nibec-final-research.webp" width="1440" height="817" loading="lazy" alt="NIBEC"></div></div></figure>
+<table>
+<thead>
+<tr>
+<th>문제</th>
+<th>대응</th>
+<th>결과</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>큰 페이지에서 디자인 정보가 다 담기지 않음</td>
+<td>섹션 하나에 구현 에이전트 하나</td>
+<td>해결</td>
+</tr>
+<tr>
+<td>섹션이 많을수록 메인 세션 컨텍스트가 빠르게 참</td>
+<td>결과 대신 마커 파일을 남기고 개수만 확인</td>
+<td>해결</td>
+</tr>
+<tr>
+<td>크기가 <code>size-full</code> 같은 상대값으로 옴</td>
+<td>체크리스트에 적어 둔 실제 픽셀값 사용</td>
+<td>해결</td>
+</tr>
+<tr>
+<td>Figma API 호출 한도(429)</td>
+<td>10개씩 묶음 실행, 재시도, 직렬 명령</td>
+<td>직렬 명령은 안정적, 병렬 명령은 여전히 불안정</td>
+</tr>
+<tr>
+<td>Auto Layout 없이 그린 시안</td>
+<td>변환 규칙으로 보정</td>
+<td>시안 구조가 나쁠수록 결과가 흔들림</td>
+</tr>
+<tr>
+<td>여러 벡터 조각으로 된 아이콘</td>
+<td>별도 처리 없음</td>
+<td>해결하지 못함, 검수에서 확인</td>
+</tr>
+</tbody>
+</table>
+<p>표의 아래쪽 두 줄이 남은 한계입니다. 이 도구는 Figma 데이터를 바탕으로 구현하기 때문에, 결과물의 품질이 시안의 구조 품질에 크게 좌우됩니다. <mark>그래서 생성된 결과물은 반드시 사람의 검수를 거치게 했고, 검수까지를 도구가 정한 작업 과정에 포함했습니다.</mark></p></div><a class="back-link bottom" href="/">홈으로 돌아가기</a></article></main><footer class="site-footer content"><span>© 2026 박승진</span></footer><script>
+      (() => {
+        const button = document.querySelector(".theme-toggle");
+        if (!button) return;
+        const root = document.documentElement;
+        const media = matchMedia("(prefers-color-scheme: dark)");
+        const current = () =>
+          root.dataset.theme || (media.matches ? "dark" : "light");
+        const label = () =>
+          button.setAttribute(
+            "aria-label",
+            current() === "dark" ? "라이트 모드로 전환" : "다크 모드로 전환",
+          );
+        button.hidden = false;
+        label();
+        button.addEventListener("click", () => {
+          const next = current() === "dark" ? "light" : "dark";
+          root.dataset.theme = next;
+          try {
+            localStorage.setItem("theme", next);
+          } catch (e) {}
+          label();
+        });
+        media.addEventListener("change", label);
+      })();
+    </script></body></html>
